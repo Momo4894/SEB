@@ -3,6 +3,8 @@ package seb.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.List;
+
 public class User {
     private int id;
     @JsonProperty("Username")
@@ -17,6 +19,7 @@ public class User {
     private String bio;
     @JsonProperty("Image")
     private String image;
+    private List<Integer> stats;
 
     public User() {
         this.elo = 0;

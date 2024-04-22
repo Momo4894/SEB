@@ -23,16 +23,25 @@ public class UserController extends Controller{
     }
 
     // GET /user(:username)
-    public Response getUser(String username)
+    public Response getUser(Request request)
     {
         try {
-            User userData = this.userRepository.getUser(username);
-            String userDataJSON = this.getObjectMapper().writeValueAsString(userData);
+            String username = request.getPathParts().get(1);
+            if(request.getAuthorizationToken().equals(username + "-sebToken")) {
+                User userData = this.userRepository.getUser(username);
+                String userDataJSON = this.getObjectMapper().writeValueAsString(userData);
+                return new Response(
+                        HttpStatus.OK,
+                        ContentType.JSON,
+                        "{ \"message\" : \"success\" }" + userDataJSON
+                );
+            }
             return new Response(
-                    HttpStatus.OK,
+                    HttpStatus.UNAUTHORIZED,
                     ContentType.JSON,
-                    "{ \"message\" : \"success\" }" + userDataJSON
+                    "{ \"message\" : \"invalid token\" }"
             );
+
         } catch (JsonProcessingException e) {
             e.printStackTrace();
             return new Response(
@@ -52,6 +61,12 @@ public class UserController extends Controller{
                     HttpStatus.OK,
                     ContentType.JSON,
                     userDataJSON
+            );
+        } catch (DataAccessException e) {
+            return new Response(
+                    HttpStatus.NOT_FOUND,
+                    ContentType.JSON,
+                    "{ \"message\": \"failed\" }"
             );
         } catch (JsonProcessingException e) {
             e.printStackTrace();
@@ -123,15 +138,25 @@ public class UserController extends Controller{
     // PUT /user(:username)
     public Response addUserData(Request request) {
         try {
-            User user = this.getObjectMapper().readValue(request.getBody(), User.class);
-            user.setUsername(request.getPathParts().get(1));
-            this.userRepository.addUserData(user);
+            String username = request.getPathParts().get(1);
+            if (request.getAuthorizationToken().equals(username + "-sebToken")) {
+                User user = this.getObjectMapper().readValue(request.getBody(), User.class);
+                user.setUsername(username);
+                this.userRepository.addUserData(user);
+
+                return new Response(
+                        HttpStatus.OK,
+                        ContentType.JSON,
+                        "{ \"message\": \"Success\" }"
+                );
+            }
 
             return new Response(
-                    HttpStatus.OK,
+                    HttpStatus.UNAUTHORIZED,
                     ContentType.JSON,
-                    "{ \"message\": \"Success\" }"
+                    "{ \"message\": \"invalid token\" }"
             );
+
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }

@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLTimeoutException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -71,6 +72,7 @@ public class UserRepository {
             System.out.println(user.getBio());
             System.out.println(user.getImage());
             System.out.println(user.getUsername());
+            preparedStatement.executeUpdate();
             this.unitOfWork.commitTransaction();
         } catch (SQLException e) {
             throw new DataAccessException("Update nicht erfolgreich" + e.getMessage(), e);
@@ -98,14 +100,21 @@ public class UserRepository {
     }
 
     public User getUser(String username) {
+        System.out.println("in getUser");
         try (PreparedStatement preparedStatement =
-                     this.unitOfWork.prepareStatement("""
+                     /*this.unitOfWork.prepareStatement("""
                         select * from users where username = ?
-                        """))
+                        """)*/this.unitOfWork.prepareStatement("SELECT * FROM users WHERE username = ?"))
+
         {
             preparedStatement.setString(1, username);
+            System.out.println("before cor");
+            System.out.println(preparedStatement);
             ResultSet resultSet = preparedStatement.executeQuery();
+
+            System.out.println("after");
             if (resultSet.next()) {
+                System.out.println("in resultset next");
                 User user = new User(
                         resultSet.getInt("id"),
                         resultSet.getString("username"),
@@ -117,9 +126,10 @@ public class UserRepository {
                 );
                 return user;
             }
-
+            System.out.println("no resultset.next()");
             return null;
         } catch (SQLException e) {
+            e.printStackTrace();
             throw new DataAccessException("Select nicht erfolgreich: " + e.getMessage(), e);
         }
     }

@@ -21,9 +21,9 @@ public class UserService implements Service {
     @Override
     public Response handleRequest(Request request) {
         System.out.println(request.getPathParts());
-        if(request.getMethod() == Method.GET && request.getPathParts().size() > 1 && request.getAuthorizationToken().equals(request.getPathParts().get(1) + "-sebToken")) {
-            return this.userController.getUser(request.getPathParts().get(1));
-        } else if (request.getMethod() == Method.PUT && request.getPathParts().size() > 1 && request.getAuthorizationToken().equals(request.getPathParts().get(1) + "-sebToken")) {
+        if(request.getMethod() == Method.GET && request.getPathParts().size() > 1) {
+            return this.userController.getUser(request);
+        } else if (request.getMethod() == Method.PUT && request.getPathParts().size() > 1) {
             return this.userController.addUserData(request);
         } else if (request.getMethod() == Method.GET) {
             return this.userController.getUserPerRepository();
