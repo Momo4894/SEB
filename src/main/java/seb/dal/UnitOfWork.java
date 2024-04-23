@@ -64,4 +64,17 @@ public class UnitOfWork implements AutoCloseable{
     public void close() throws Exception {
         this.finishWork();
     }
+
+    public Connection getConnection() {
+        return connection;
+    }
+
+    public void rollback() {
+        try {
+            connection.rollback();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+    }
 }

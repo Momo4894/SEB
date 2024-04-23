@@ -5,10 +5,7 @@ import seb.dal.UnitOfWork;
 import seb.model.User;
 
 import java.io.IOException;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.SQLTimeoutException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -37,16 +34,66 @@ public class UserRepository {
             }
             return userRows;
         } catch (SQLException e) {
+            e.printStackTrace();
+            if (this.unitOfWork.getConnection() != null) {
+                this.unitOfWork.rollback(); // Rollback transaction if error occurs
+            }
             throw new DataAccessException("Select nicht erfolgreich", e);
         }
     }
 
-    public void addUser(User user) {
+    public int getUserId(String username) {
         try (PreparedStatement preparedStatement =
                      this.unitOfWork.prepareStatement("""
-                        insert into users (username, password, elo) values (?, ?, ?)
-                        """))
+                select id from users where username = ?
+                """))
         {
+            preparedStatement.setString(1, username);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if(resultSet.next()) {
+                return resultSet.getInt("id");
+            }
+            throw new IOException("No user found");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            if (this.unitOfWork.getConnection() != null) {
+                this.unitOfWork.rollback(); // Rollback transaction if error occurs
+            }
+            throw new DataAccessException("Select nicht erfolgreich", e);
+        } catch (IOException e) {
+            throw new DataAccessException(e.getMessage(), e);
+        }
+    }
+
+    public int getElo(String username) {
+        try (PreparedStatement preparedStatement =
+                     this.unitOfWork.prepareStatement("""
+                select elo from users where username = ?
+                """))
+        {
+            preparedStatement.setString(1, username);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if(resultSet.next()) {
+                return resultSet.getInt("elo");
+            }
+            throw new IOException("No user found");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            if (this.unitOfWork.getConnection() != null) {
+                this.unitOfWork.rollback(); // Rollback transaction if error occurs
+            }
+            throw new DataAccessException("Select nicht erfolgreich", e);
+        } catch (IOException e) {
+            throw new DataAccessException(e.getMessage(), e);
+        }
+    }
+
+    public void addUser(User user) {
+        try {
+            PreparedStatement preparedStatement = this.unitOfWork.prepareStatement(
+                    "INSERT INTO users (username, password, elo) VALUES (?, ?, ?)"
+            );
+
             preparedStatement.setString(1, user.getUsername());
             preparedStatement.setString(2, user.getPassword());
             preparedStatement.setInt(3, user.getElo());
@@ -68,13 +115,14 @@ public class UserRepository {
             preparedStatement.setString(2, user.getBio());
             preparedStatement.setString(3, user.getImage());
             preparedStatement.setString(4, user.getUsername());
-            System.out.println(user.getName());
-            System.out.println(user.getBio());
-            System.out.println(user.getImage());
-            System.out.println(user.getUsername());
+
             preparedStatement.executeUpdate();
             this.unitOfWork.commitTransaction();
         } catch (SQLException e) {
+            e.printStackTrace();
+            if (this.unitOfWork.getConnection() != null) {
+                this.unitOfWork.rollback(); // Rollback transaction if error occurs
+            }
             throw new DataAccessException("Update nicht erfolgreich" + e.getMessage(), e);
         }
     }
@@ -93,8 +141,16 @@ public class UserRepository {
             }
 
         } catch (SQLException e) {
+            e.printStackTrace();
+            if (this.unitOfWork.getConnection() != null) {
+                this.unitOfWork.rollback(); // Rollback transaction if error occurs
+            }
             throw new DataAccessException("select nicht erfolgreich", e);
         } catch (IOException e) {
+            e.printStackTrace();
+            if (this.unitOfWork.getConnection() != null) {
+                this.unitOfWork.rollback(); // Rollback transaction if error occurs
+            }
             throw new DataAccessException("No user found");
         }
     }
@@ -108,13 +164,10 @@ public class UserRepository {
 
         {
             preparedStatement.setString(1, username);
-            System.out.println("before cor");
-            System.out.println(preparedStatement);
+
             ResultSet resultSet = preparedStatement.executeQuery();
 
-            System.out.println("after");
             if (resultSet.next()) {
-                System.out.println("in resultset next");
                 User user = new User(
                         resultSet.getInt("id"),
                         resultSet.getString("username"),
@@ -126,10 +179,12 @@ public class UserRepository {
                 );
                 return user;
             }
-            System.out.println("no resultset.next()");
             return null;
         } catch (SQLException e) {
             e.printStackTrace();
+            if (this.unitOfWork.getConnection() != null) {
+                this.unitOfWork.rollback(); // Rollback transaction if error occurs
+            }
             throw new DataAccessException("Select nicht erfolgreich: " + e.getMessage(), e);
         }
     }
@@ -152,6 +207,31 @@ public class UserRepository {
             }
             return userRows;
         } catch (SQLException e) {
+            e.printStackTrace();
+            if (this.unitOfWork.getConnection() != null) {
+                this.unitOfWork.rollback(); // Rollback transaction if error occurs
+            }
+            throw new DataAccessException("Select nicht erfolgreich", e);
+        }
+    }
+
+    public String getUsername(int userId) {
+        try (PreparedStatement preparedStatement =
+                this.unitOfWork.prepareStatement("""
+                select username from users where id = ?
+                """))
+        {
+            ResultSet resultSet = preparedStatement.executeQuery();
+            String username = null;
+            if (resultSet.next()) {
+                username = resultSet.getString("username");
+            }
+            return username;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            if (this.unitOfWork.getConnection() != null) {
+                this.unitOfWork.rollback(); // Rollback transaction if error occurs
+            }
             throw new DataAccessException("Select nicht erfolgreich", e);
         }
     }

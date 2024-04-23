@@ -22,14 +22,14 @@ public class User {
     private List<Integer> stats;
 
     public User() {
-        this.elo = 0;
+        this.elo = 100;
     }
 
     public User(int id, String username, String password) {
         this.id =id;
         this.username = username;
         this.password = password;
-        this.elo = 0;
+        this.elo = 100;
     }
 
     public User(int id, String username, String password, int elo, String name, String bio, String image) {
@@ -46,6 +46,12 @@ public class User {
         this.name = name;
         this.bio = bio;
         this.image = image;
+    }
+
+    public User(int id, String username, int elo) {
+        this.id = id;
+        this.username = username;
+        this.elo = elo;
     }
 
     public int getId() { return id; }

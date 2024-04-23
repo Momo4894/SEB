@@ -44,6 +44,7 @@ public class UserController extends Controller{
 
         } catch (JsonProcessingException e) {
             e.printStackTrace();
+            unitOfWork.rollbackTransaction();
             return new Response(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     ContentType.JSON,
@@ -63,6 +64,7 @@ public class UserController extends Controller{
                     userDataJSON
             );
         } catch (DataAccessException e) {
+            unitOfWork.rollbackTransaction();
             return new Response(
                     HttpStatus.NOT_FOUND,
                     ContentType.JSON,
@@ -70,6 +72,7 @@ public class UserController extends Controller{
             );
         } catch (JsonProcessingException e) {
             e.printStackTrace();
+            unitOfWork.rollbackTransaction();
             return new Response(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     ContentType.JSON,
@@ -92,6 +95,7 @@ public class UserController extends Controller{
             );
 
         } catch (DataAccessException e) {
+            unitOfWork.rollbackTransaction();
             return new Response(
                     HttpStatus.NOT_FOUND,
                     ContentType.JSON,
@@ -99,6 +103,7 @@ public class UserController extends Controller{
             );
         }  catch (JsonProcessingException e) {
             e.printStackTrace();
+            unitOfWork.rollbackTransaction();
             return new Response(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     ContentType.JSON,
@@ -121,13 +126,15 @@ public class UserController extends Controller{
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         } catch (DataAccessException e) {
+            e.printStackTrace();
+            unitOfWork.rollbackTransaction();
             return new Response(
                     HttpStatus.BAD_REQUEST,
                     ContentType.JSON,
                     "{ \"message\": \"User already exists\" }"
             );
         }
-
+        unitOfWork.rollbackTransaction();
         return new Response(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 ContentType.JSON,
@@ -159,13 +166,15 @@ public class UserController extends Controller{
 
         } catch (JsonProcessingException e) {
             e.printStackTrace();
+            unitOfWork.rollbackTransaction();
+            return new Response(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    ContentType.JSON,
+                    "{ \"message\" : \"Internal Server Error\" }"
+            );
         }
 
-        return new Response(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                ContentType.JSON,
-                "{ \"message\" : \"Internal Server Error\" }"
-        );
+
     }
 
     // GET /user
