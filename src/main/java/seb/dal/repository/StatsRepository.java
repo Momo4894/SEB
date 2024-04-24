@@ -16,11 +16,8 @@ public class StatsRepository {
 
     public StatsRepository(UnitOfWork unitOfWork) { this.unitOfWork = unitOfWork; }
 
-    public Collection<Stats> getAllStatsByUser(int user_id) {
-        System.out.println("");
-        System.out.println("");
-        System.out.println("");
-        System.out.println("");
+    public List<Stats> getAllStatsByUser(int user_id) {
+
         try (PreparedStatement preparedStatement =
                      this.unitOfWork.prepareStatement("""
                         select * from stats where user_id = ?
@@ -29,7 +26,7 @@ public class StatsRepository {
         {
             preparedStatement.setInt(1, user_id);
             ResultSet resultSet = preparedStatement.executeQuery();
-            Collection<Stats> statsRows = new ArrayList<>();
+            List<Stats> statsRows = new ArrayList<>();
             while (resultSet.next()) {
                 Stats stats = new Stats(
                         resultSet.getInt("id"),

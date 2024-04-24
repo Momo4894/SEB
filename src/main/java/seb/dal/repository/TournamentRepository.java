@@ -44,7 +44,6 @@ public class TournamentRepository {
                         resultSet.getTimestamp("start_time"),
                         Status.valueOf(resultSet.getString("status").toUpperCase())
                 );
-                System.out.println(tournament.getStatusString());
                 return tournament;
             }
             return null;
@@ -79,10 +78,11 @@ public class TournamentRepository {
 
             ResultSet resultSet = preparedStatement.executeQuery();
             List<Tournament> tournaments = new ArrayList<>();
-            if (!resultSet.next()) {
-                return null;
-            }
+
+
+            boolean emptyResultSet = true;
             while (resultSet.next()) {
+                emptyResultSet = false;
                 tournaments.add(new Tournament(
                         resultSet.getInt("id"),
                         resultSet.getTimestamp("start_time"),
@@ -90,6 +90,10 @@ public class TournamentRepository {
                 ));
 
             }
+            if (emptyResultSet) {
+                return null;
+            }
+
             return tournaments;
         } catch (SQLException e) {
             e.printStackTrace();

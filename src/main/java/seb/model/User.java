@@ -1,10 +1,14 @@
 package seb.model;
 
 
+import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 
 import java.util.List;
 
+@JsonPOJOBuilder
 public class User {
     private int id;
     @JsonProperty("Username")

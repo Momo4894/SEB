@@ -19,9 +19,7 @@ import seb.model.Tournament_Participant;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -58,10 +56,16 @@ public class StatsController extends Controller{
 
                 int overallPushupCount = this.statsRepository.getOverAllPushupsPerUser(user_id);
 
+                String responseJSON = String.format(
+                        "{ \"elo\": %s, \"overall PushUp count\": %s }",
+                        user_elo,
+                        overallPushupCount
+                );
+
                 return new Response(
                         HttpStatus.OK,
                         ContentType.JSON,
-                        "{ \"message\" : \"success\" } elo: " + user_elo + " overall pushup count: " + overallPushupCount
+                        responseJSON
                 );
 
         } catch (Exception e) {
@@ -76,27 +80,34 @@ public class StatsController extends Controller{
             String username = parts[0];
             int user_id = this.userRepository.getUserId(username);
 
-            Collection<Stats> stats = this.statsRepository.getAllStatsByUser(user_id); //getStats()
+            List<Stats> stats = this.statsRepository.getAllStatsByUser(user_id); //getStats()
 
-            Map<String, Object> map = new HashMap<>();
-            Map<Object, Object> historyMap = new HashMap<>();
-
+            List<String> statsString = new ArrayList<>();
             if (!objectMapper.writeValueAsString(stats).equals("[]")) {
                 for (Stats currentStats: stats) {
-                    Map<String, Object> historyMapDetails = new HashMap<>();
-                    historyMapDetails.put("duration", currentStats.getDuration());
-                    historyMapDetails.put("count", currentStats.getCount());
-                    historyMap.put(currentStats.getId(), historyMapDetails);
+                    String tempString = String.format(
+                            "{ \"history-ID\": %s: { \"duration\": %s, \"PushUp-Count\": %s }",
+                            currentStats.getId(),
+                            currentStats.getDuration(),
+                            currentStats.getCount()
+                    );
+                    statsString.add(tempString);
                 }
-                map.put(username, historyMap);
-            } else { map.put(username, "no entry"); }
+            } else {
+                statsString.add("no entry");
+            }
 
-            String historyJSON = objectMapper.writeValueAsString(map);
+
+            String responseJSON = String.format(
+                    "{ %s: %s }",
+                    username,
+                    statsString
+            );
 
             return new Response(
                     HttpStatus.OK,
                     ContentType.JSON,
-                    historyJSON
+                    responseJSON
             );
 
         } catch (Exception e) {

@@ -37,7 +37,9 @@ public class TournamentController {
         try {
             String[] parts = request.getAuthorizationToken().split("-sebToken", 2);
             String username = parts[0];
+            System.out.println("TournamentController.getTournamentsByUser(Request request): " + username);
             List<Tournament> tournaments = this.tournamentRepository.getTournamentsByUsername(username);
+            System.out.println("TournamentController.getTournamentsByUser(Request request): after getTournamentsByUsername");
             if (tournaments == null) {
                 return new Response(
                         HttpStatus.OK,
@@ -45,15 +47,16 @@ public class TournamentController {
                         "{ \"no tournament found\" }"
                 );
             }
+            System.out.println("TournamentController.getTournamentsByUser(Request request): after not null");
+            System.out.println(tournaments);
 
-
-
-
-            String formatTournaments;
             List<String> formattedTournaments = new ArrayList<>();
+            System.out.println("TournamentController.getTournamentsByUser(Request request): after new array");
             for (Tournament currentTournament: tournaments) {
+                System.out.println("TournamentController.getTournamentsByUser(Request request): in currentTournament");
                 String tournamentFormat;
                 if(!currentTournament.getStatusString().equals("pending")) {
+                    System.out.println("TournamentController.getTournamentsByUser(Request request): in status != pending");
                     int participantAmount = this.t_participantRepository.getParticipantAmountByTournamentId(currentTournament.getId());
 
                     //get 1st place
@@ -68,11 +71,12 @@ public class TournamentController {
                     } else if (firstPlaceList.size() == 1) {
                         firstPlace = firstPlaceList.getFirst();
                     } else { firstPlace = "no first place"; }
-
+                    System.out.println("TournamentController.getTournamentsByUser(Request request): before timestamp was made readable");
                     //retrieve time and make readable
                     Timestamp startTime = currentTournament.getStartTime();
                     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
                     String formattedStartTime = simpleDateFormat.format(startTime);
+                    System.out.println("TournamentController.getTournamentsByUser(Request request): after timestamp was made readable");
 
                     tournamentFormat = String.format(
                             "{ \"tournament-status\": %s, \"participants\": %s, \"1st Place\": %s, \"start-time\": %s }",
@@ -83,7 +87,7 @@ public class TournamentController {
                     );
                 } else {
                     tournamentFormat = String.format(
-                            "{ \"tournament-status\": %s }\n",
+                            "{ \"tournament-status\": %s }",
                             currentTournament.getStatusString()
                     );
                 }
@@ -175,7 +179,6 @@ public class TournamentController {
             List<Integer> firstPlace = new ArrayList();
             List<Integer> otherPlaces = new ArrayList();
             for (Map.Entry<Integer, Integer> currentUser : userIdPlacement.entrySet()) {
-                System.out.println(currentUser.getKey() + " + " + currentUser.getValue());
                 if(currentUser.getValue() == 1) {
                     firstPlace.add(currentUser.getKey());
                 } else {
