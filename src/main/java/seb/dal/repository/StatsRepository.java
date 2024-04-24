@@ -1,10 +1,8 @@
 package seb.dal.repository;
 
-import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import seb.dal.DataAccessException;
 import seb.dal.UnitOfWork;
 import seb.model.Stats;
-import seb.model.User;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -12,7 +10,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Vector;
 
 public class StatsRepository {
     private UnitOfWork unitOfWork;
@@ -30,11 +27,8 @@ public class StatsRepository {
                         """))
 
         {
-            System.out.println("before setInt");
             preparedStatement.setInt(1, user_id);
-            System.out.println("after setInt");
             ResultSet resultSet = preparedStatement.executeQuery();
-            System.out.println("after execute query");
             Collection<Stats> statsRows = new ArrayList<>();
             while (resultSet.next()) {
                 Stats stats = new Stats(
@@ -100,14 +94,14 @@ public class StatsRepository {
     public void addHistory (Stats stats) {
         try (PreparedStatement preparedStatement =
                 this.unitOfWork.prepareStatement("""
-                        insert into stats (type, duration, count, user_id, tournament_id) values (?, ?, ?, ?, ?)
+                        insert into stats (type, duration, count, user_id, tournament_id) values (cast(? as exercise_type), ?, ?, ?, ?)
                         """))
         {
             preparedStatement.setString(1, stats.getName().getType());
             preparedStatement.setInt(2, stats.getDuration());
             preparedStatement.setInt(3, stats.getCount());
             preparedStatement.setInt(4, stats.getUser_id());
-            preparedStatement.setInt(3, stats.getTournament_id());
+            preparedStatement.setInt(5, stats.getTournament_id());
 
             preparedStatement.executeUpdate();
             unitOfWork.commitTransaction();
@@ -117,4 +111,23 @@ public class StatsRepository {
     }
 
 
+    public int getOverAllCountByUserInTournament(int userId, int tournamentId) {
+        try (PreparedStatement preparedStatement =
+                this.unitOfWork.prepareStatement("""
+                        select count from stats where user_id = ? and tournament_id = ?
+                        """))
+        {
+            preparedStatement.setInt(1, userId);
+            preparedStatement.setInt(2, tournamentId);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            int count = 0;
+            while (resultSet.next()) {
+                count += resultSet.getInt("count");
+            }
+            return count;
+        } catch (SQLException e) {
+            throw new DataAccessException("Select nicht erfolgreich: " + e.getMessage(), e);
+        }
+    }
 }

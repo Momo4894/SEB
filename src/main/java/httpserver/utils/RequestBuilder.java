@@ -26,7 +26,6 @@ public class RequestBuilder {
                 if (line.startsWith(headerKey)) {
                     String token = line.substring(headerKey.length()).trim();
                     request.setAuthorizationToken(token);
-                    System.out.println(token);
 
                 }
                 line = bufferedReader.readLine();

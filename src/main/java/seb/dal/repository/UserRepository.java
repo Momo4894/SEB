@@ -156,7 +156,6 @@ public class UserRepository {
     }
 
     public User getUser(String username) {
-        System.out.println("in getUser");
         try (PreparedStatement preparedStatement =
                      /*this.unitOfWork.prepareStatement("""
                         select * from users where username = ?
@@ -228,11 +227,26 @@ public class UserRepository {
             }
             return username;
         } catch (SQLException e) {
+            throw new DataAccessException("Select nicht erfolgreich", e);
+        }
+    }
+
+    public void changeEloById(int user_id, int amountToChangeElo) {
+        try (PreparedStatement preparedStatement =
+                this.unitOfWork.prepareStatement("""
+                        update users set elo = elo + ? where id = ?
+                        """))
+        {
+            preparedStatement.setInt(1, amountToChangeElo);
+            preparedStatement.setInt(2, user_id);
+            preparedStatement.executeUpdate();
+            this.unitOfWork.commitTransaction();
+        } catch (SQLException e) {
             e.printStackTrace();
             if (this.unitOfWork.getConnection() != null) {
                 this.unitOfWork.rollback(); // Rollback transaction if error occurs
             }
-            throw new DataAccessException("Select nicht erfolgreich", e);
+            throw new DataAccessException("Update nicht erfolgreich", e);
         }
     }
 }

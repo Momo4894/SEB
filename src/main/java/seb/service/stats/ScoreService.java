@@ -20,7 +20,6 @@ public class ScoreService implements Service {
 
     @Override
     public Response handleRequest(Request request) {
-        System.out.println(request.getPathParts());
 
         if(request.getMethod() == Method.GET) {
             return this.scoreController.getScore(request);

@@ -22,7 +22,7 @@ public class TournamentService implements Service {
     @Override
     public Response handleRequest (Request request) {
         if (request.getMethod() == Method.GET) {
-            return this.tournamentController.getActiveTournament(request);
+            return this.tournamentController.getTournamentsByUser(request);
         }
         return new Response(
                 HttpStatus.BAD_REQUEST,

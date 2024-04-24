@@ -20,7 +20,6 @@ public class UserService implements Service {
 
     @Override
     public Response handleRequest(Request request) {
-        System.out.println(request.getPathParts());
         if(request.getMethod() == Method.GET && request.getPathParts().size() > 1) {
             return this.userController.getUser(request);
         } else if (request.getMethod() == Method.PUT && request.getPathParts().size() > 1) {

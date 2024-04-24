@@ -19,4 +19,8 @@ public class Tournament {
     }
 
     public int getId() { return id; }
+
+    public String getStatusString() { return status.getStatus(); }
+
+    public Timestamp getStartTime() { return startTime; }
 }

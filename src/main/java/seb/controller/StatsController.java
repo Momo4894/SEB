@@ -15,11 +15,16 @@ import seb.dal.repository.UserRepository;
 import seb.model.Stats;
 import seb.model.Status;
 import seb.model.Tournament;
-import seb.model.User;
+import seb.model.Tournament_Participant;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class StatsController extends Controller{
     private final StatsRepository statsRepository;
@@ -28,6 +33,9 @@ public class StatsController extends Controller{
     private T_ParticipantRepository t_participantRepository;
     private final UnitOfWork unitOfWork;
     private final ObjectMapper objectMapper;
+    private final ScheduledExecutorService scheduler;
+    private final TournamentController tournamentController;
+
 
     public StatsController(UnitOfWork unitOfWork) {
         this.unitOfWork = unitOfWork;
@@ -35,7 +43,9 @@ public class StatsController extends Controller{
         this.statsRepository = new StatsRepository(unitOfWork);
         this.tournamentRepository = new TournamentRepository(unitOfWork);
         this.t_participantRepository = new T_ParticipantRepository(unitOfWork);
+        this.tournamentController = new TournamentController(unitOfWork);
         this.objectMapper = new ObjectMapper();
+        this.scheduler = Executors.newScheduledThreadPool(1);
     }
 
     public Response getStats(Request request) {
@@ -43,13 +53,10 @@ public class StatsController extends Controller{
             String[] parts = request.getAuthorizationToken().split("-sebToken", 2);
             String username = parts[0];
             int user_id = this.userRepository.getUserId(username);
-                System.out.println("user_id: " + user_id);
 
                 int user_elo = this.userRepository.getElo(username);
-                System.out.println("user_elo: " + user_elo);
 
                 int overallPushupCount = this.statsRepository.getOverAllPushupsPerUser(user_id);
-                System.out.println("overall pushups: " + overallPushupCount);
 
                 return new Response(
                         HttpStatus.OK,
@@ -115,16 +122,26 @@ public class StatsController extends Controller{
                         tournament = this.tournamentRepository.getTournamentByStatus(Status.PENDING);
                     }
                     this.tournamentRepository.startTournament(tournament.getId());
+                    LocalDateTime startTime = this.tournamentRepository.getStartTimeById(tournament.getId());
+                    LocalDateTime endTime = startTime.plusMinutes(2);
+                    long delay = Duration.between(LocalDateTime.now(), endTime).toMillis();
+                    final int tournamentIdTemp = tournament.getId();
+                    scheduler.schedule(() -> this.tournamentController.endTournament(tournamentIdTemp), delay, TimeUnit.MILLISECONDS);
                 }
                 //addTournament Participant
                 this.t_participantRepository.addTournamentParticipant(user_id, tournament.getId());
             }
             tournament_id = tournament.getId();
+            Tournament_Participant tournament_participant = this.t_participantRepository.getTournamentParticipantByIds(user_id, tournament_id);
             //addHistory with user_id and tournament_id
             Stats stats = this.getObjectMapper().readValue(request.getBody(), Stats.class);
             stats.addIds(user_id, tournament_id);
             this.statsRepository.addHistory(stats);
-            new Response(
+            int totalCountByUser = this.statsRepository.getOverAllCountByUserInTournament(user_id, tournament_id);
+            this.t_participantRepository.addScoreById(tournament_id, user_id, totalCountByUser);
+            this.t_participantRepository.updatePlacements(tournament_id);
+
+            return new Response(
                     HttpStatus.OK,
                     ContentType.JSON,
                     "{ \"message\" : \"success\" }"
@@ -148,5 +165,6 @@ public class StatsController extends Controller{
                 "{ \"message\" : \"Internal Server Error\" }"
         );
     }
+
 
 }

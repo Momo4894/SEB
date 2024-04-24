@@ -8,7 +8,6 @@ import httpserver.server.Response;
 import seb.dal.UnitOfWork;
 import seb.dal.repository.StatsRepository;
 import seb.dal.repository.UserRepository;
-import seb.model.Stats;
 import seb.model.User;
 
 import java.util.*;
@@ -26,10 +25,7 @@ public class ScoreController extends Controller{
     public Response getScore(Request request) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
-            System.out.println("");
-            System.out.println("");
-            System.out.println("");
-            System.out.println("");
+
             Map<String, Object> otherUserStatsMap = new HashMap<>();
             Map<String, Object> currentUserStats = new HashMap<>();
             List<User> users = this.userRepository.getUser();

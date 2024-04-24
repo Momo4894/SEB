@@ -20,7 +20,6 @@ public class StatsService implements Service {
 
     @Override
     public Response handleRequest(Request request) {
-        System.out.println(request.getPathParts());
         if(request.getPathParts().get(0).equals("history")) {
             if(request.getMethod() == Method.GET) {
                 return this.statsController.getHistory(request);
@@ -30,7 +29,6 @@ public class StatsService implements Service {
         }
 
         if(request.getMethod() == Method.GET) {
-            System.out.println("in method get stats");
             return this.statsController.getStats(request);
         }
         return new Response(
