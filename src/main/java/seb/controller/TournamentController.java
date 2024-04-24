@@ -16,6 +16,7 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class TournamentController {
     private UnitOfWork unitOfWork;
@@ -74,7 +75,7 @@ public class TournamentController {
                     String formattedStartTime = simpleDateFormat.format(startTime);
 
                     tournamentFormat = String.format(
-                            "{ \"tournament-status\": %s, \"participants\": %s, \"1st Place\": %s, \"start-time\": %s }\n",
+                            "{ \"tournament-status\": %s, \"participants\": %s, \"1st Place\": %s, \"start-time\": %s }",
                             currentTournament.getStatusString(),
                             participantAmount,
                             firstPlace,
@@ -170,10 +171,27 @@ public class TournamentController {
     public void endTournament(int tournament_id) {
         try {
             this.tournamentRepository.endTournament(tournament_id);
-            //get placements and user_ids from t_participants
-            //sort out the elo changes
-            //this.userRepository.changeEloById(user_id);
-
+            Map<Integer, Integer> userIdPlacement = this.t_participantRepository.getPlacementsByTournamentId(tournament_id);
+            List<Integer> firstPlace = new ArrayList();
+            List<Integer> otherPlaces = new ArrayList();
+            for (Map.Entry<Integer, Integer> currentUser : userIdPlacement.entrySet()) {
+                System.out.println(currentUser.getKey() + " + " + currentUser.getValue());
+                if(currentUser.getValue() == 1) {
+                    firstPlace.add(currentUser.getKey());
+                } else {
+                    otherPlaces.add(currentUser.getKey());
+                }
+            }
+            if (firstPlace.size() < 1) {
+                for (Integer currentFirstPlace: firstPlace) {
+                    this.userRepository.changeEloByUserId(currentFirstPlace, 1);
+                }
+            } else {
+                this.userRepository.changeEloByUserId(firstPlace.get(0), 2);
+            }
+            for (Integer currentOtherPlace: otherPlaces) {
+                this.userRepository.changeEloByUserId(currentOtherPlace, -1);
+            }
         } catch (Exception e) {
             e.printStackTrace();
             unitOfWork.rollbackTransaction();

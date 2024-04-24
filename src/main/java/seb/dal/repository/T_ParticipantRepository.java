@@ -190,4 +190,21 @@ public class T_ParticipantRepository {
         }
     }
 
+    public Map<Integer, Integer> getPlacementsByTournamentId(int tournamentId) {
+        try (PreparedStatement preparedStatement =
+                this.unitOfWork.prepareStatement("""
+                        select user_id, placement from tournament_participants where tournament_id = ? order by score desc
+                        """))
+        {
+            preparedStatement.setInt(1, tournamentId);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            Map<Integer, Integer> userIdPlacement = new HashMap<>();
+            while (resultSet.next()) {
+                userIdPlacement.put(resultSet.getInt("user_id"), resultSet.getInt("placement"));
+            }
+            return userIdPlacement;
+        } catch (SQLException e) {
+            throw new DataAccessException("select nicht erfolgreich" + e.getMessage(), e);
+        }
+    }
 }

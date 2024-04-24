@@ -24,10 +24,10 @@ public class TournamentRepository {
     public Tournament getTournamentByStatusAndUsername(String username, Status status) {
         try (PreparedStatement preparedStatement =
                 this.unitOfWork.prepareStatement("""
-                        select t.* 
-                        from users u 
-                        join tournament_participants tp on u.id = tp.user_id 
-                        join tournaments t on tp.tournament_id = t.id 
+                        select t.*
+                        from users u
+                        join tournament_participants tp on u.id = tp.user_id
+                        join tournaments t on tp.tournament_id = t.id
                         where u.username = ? and t.status = cast(? AS tournament_status)"""))
         {
 
@@ -42,8 +42,9 @@ public class TournamentRepository {
                 Tournament tournament = new Tournament(
                         resultSet.getInt("id"),
                         resultSet.getTimestamp("start_time"),
-                        status
+                        Status.valueOf(resultSet.getString("status").toUpperCase())
                 );
+                System.out.println(tournament.getStatusString());
                 return tournament;
             }
             return null;
@@ -59,14 +60,14 @@ public class TournamentRepository {
     public List<Tournament> getTournamentsByUsername(String username) {
         try (PreparedStatement preparedStatement =
                      this.unitOfWork.prepareStatement("""
-                        select t.* 
-                        from users u 
-                        join tournament_participants tp on u.id = tp.user_id 
-                        join tournaments t on tp.tournament_id = t.id 
+                        select t.*
+                        from users u
+                        join tournament_participants tp on u.id = tp.user_id
+                        join tournaments t on tp.tournament_id = t.id
                         where u.username = ?
-                        sorted by case
-                        when status = 'completed' then 1
-                        when status = 'active' then 2
+                        order by case
+                        when status = 'active' then 1
+                        when status = 'completed' then 2
                         when status = 'pending' then 3
                         when status = 'cancelled' then 4
                         else 5
@@ -78,16 +79,18 @@ public class TournamentRepository {
 
             ResultSet resultSet = preparedStatement.executeQuery();
             List<Tournament> tournaments = new ArrayList<>();
-
+            if (!resultSet.next()) {
+                return null;
+            }
             while (resultSet.next()) {
                 tournaments.add(new Tournament(
                         resultSet.getInt("id"),
                         resultSet.getTimestamp("start_time"),
-                        (Status) resultSet.getObject("status")
+                        Status.valueOf(resultSet.getString("status").toUpperCase())
                 ));
-                return tournaments;
+
             }
-            return null;
+            return tournaments;
         } catch (SQLException e) {
             e.printStackTrace();
             if (this.unitOfWork.getConnection() != null) {
@@ -131,7 +134,7 @@ public class TournamentRepository {
                 return new Tournament(
                         resultSet.getInt("id"),
                         resultSet.getTimestamp("start_time"),
-                        status
+                        Status.valueOf(resultSet.getString("status").toUpperCase())
                 );
             }
             return null;

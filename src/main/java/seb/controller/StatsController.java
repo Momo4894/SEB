@@ -126,14 +126,13 @@ public class StatsController extends Controller{
                     LocalDateTime endTime = startTime.plusMinutes(2);
                     long delay = Duration.between(LocalDateTime.now(), endTime).toMillis();
                     final int tournamentIdTemp = tournament.getId();
+
                     scheduler.schedule(() -> this.tournamentController.endTournament(tournamentIdTemp), delay, TimeUnit.MILLISECONDS);
                 }
                 //addTournament Participant
                 this.t_participantRepository.addTournamentParticipant(user_id, tournament.getId());
             }
             tournament_id = tournament.getId();
-            Tournament_Participant tournament_participant = this.t_participantRepository.getTournamentParticipantByIds(user_id, tournament_id);
-            //addHistory with user_id and tournament_id
             Stats stats = this.getObjectMapper().readValue(request.getBody(), Stats.class);
             stats.addIds(user_id, tournament_id);
             this.statsRepository.addHistory(stats);

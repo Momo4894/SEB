@@ -28,7 +28,7 @@ public class ScoreController extends Controller{
 
             Map<String, Object> otherUserStatsMap = new HashMap<>();
             Map<String, Object> currentUserStats = new HashMap<>();
-            List<User> users = this.userRepository.getUser();
+            List<User> users = this.userRepository.getUsernameIdElo();
             for (User currentUser: users) {
                 boolean isAdded = false;
                 Map<String, Object> userStatsDetails = new HashMap<>();
