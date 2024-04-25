@@ -8,6 +8,7 @@ import httpserver.server.Response;
 import seb.dal.UnitOfWork;
 import seb.dal.repository.StatsRepository;
 import seb.dal.repository.UserRepository;
+import seb.model.Tips;
 import seb.model.User;
 
 import java.util.*;
@@ -16,10 +17,12 @@ public class ScoreController extends Controller{
     private final StatsRepository statsRepository;
     private final UserRepository userRepository;
     private final UnitOfWork unitOfWork;
+    private Tips tips;
     public ScoreController(UnitOfWork unitOfWork) {
         this.unitOfWork = unitOfWork;
         this.userRepository = new UserRepository(unitOfWork);
         this.statsRepository = new StatsRepository(unitOfWork);
+        this.tips = new Tips();
     }
 
     public Response getScore(Request request) {
@@ -64,7 +67,7 @@ public class ScoreController extends Controller{
             return new Response(
                     HttpStatus.OK,
                     ContentType.JSON,
-                    responseBody
+                    responseBody + "\n" + tips.getTip()
             );
 
         } catch (Exception e) {

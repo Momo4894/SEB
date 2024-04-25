@@ -20,4 +20,8 @@ public enum HttpStatus {
         this.code = code;
         this.message = message;
     }
+
+    public int value() {
+        return code;
+    }
 }

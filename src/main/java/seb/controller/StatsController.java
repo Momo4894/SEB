@@ -12,10 +12,7 @@ import seb.dal.repository.StatsRepository;
 import seb.dal.repository.T_ParticipantRepository;
 import seb.dal.repository.TournamentRepository;
 import seb.dal.repository.UserRepository;
-import seb.model.Stats;
-import seb.model.Status;
-import seb.model.Tournament;
-import seb.model.Tournament_Participant;
+import seb.model.*;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -33,6 +30,7 @@ public class StatsController extends Controller{
     private final ObjectMapper objectMapper;
     private final ScheduledExecutorService scheduler;
     private final TournamentController tournamentController;
+    private Tips tips;
 
 
     public StatsController(UnitOfWork unitOfWork) {
@@ -44,6 +42,7 @@ public class StatsController extends Controller{
         this.tournamentController = new TournamentController(unitOfWork);
         this.objectMapper = new ObjectMapper();
         this.scheduler = Executors.newScheduledThreadPool(1);
+        this.tips = new Tips();
     }
 
     public Response getStats(Request request) {
@@ -65,7 +64,7 @@ public class StatsController extends Controller{
                 return new Response(
                         HttpStatus.OK,
                         ContentType.JSON,
-                        responseJSON
+                        responseJSON + "\n" + tips.getTip()
                 );
 
         } catch (Exception e) {
@@ -107,7 +106,7 @@ public class StatsController extends Controller{
             return new Response(
                     HttpStatus.OK,
                     ContentType.JSON,
-                    responseJSON
+                    responseJSON + "\n" + tips.getTip()
             );
 
         } catch (Exception e) {
@@ -151,10 +150,13 @@ public class StatsController extends Controller{
             this.t_participantRepository.addScoreById(tournament_id, user_id, totalCountByUser);
             this.t_participantRepository.updatePlacements(tournament_id);
 
+            System.out.println("User: " + username + " completed " + stats.getCount() + " more PushUps.");
+            System.out.println("They now have " + totalCountByUser + " PushUps in total!\n");
+
             return new Response(
                     HttpStatus.OK,
                     ContentType.JSON,
-                    "{ \"message\" : \"success\" }"
+                    "{ \"message\" : \"success\" }" + "\n" + tips.getTip()
             );
 
         } catch (JsonProcessingException e) {

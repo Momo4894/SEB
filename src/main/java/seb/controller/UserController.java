@@ -8,6 +8,7 @@ import httpserver.server.Response;
 import seb.dal.DataAccessException;
 import seb.dal.UnitOfWork;
 import seb.dal.repository.UserRepository;
+import seb.model.Tips;
 import seb.model.User;
 
 import java.util.Collection;
@@ -17,10 +18,15 @@ public class UserController extends Controller{
     private final UserRepository userRepository;
     private final UnitOfWork unitOfWork;
 
+    private Tips tips;
+
     public UserController(UnitOfWork unitOfWork) {
         this.unitOfWork = unitOfWork;
         this.userRepository = new UserRepository(unitOfWork);
+        this.tips = new Tips();
     }
+
+    public UserRepository getUserRepository() { return userRepository; }
 
     // GET /user(:username)
     public Response getUser(Request request)
@@ -33,7 +39,7 @@ public class UserController extends Controller{
                 return new Response(
                         HttpStatus.OK,
                         ContentType.JSON,
-                        "{ \"message\" : \"success\" }" + userDataJSON
+                        "{ \"message\" : \"success\" }" + userDataJSON + "\n" + tips.getTip()
                 );
             }
             return new Response(
@@ -61,7 +67,7 @@ public class UserController extends Controller{
             return new Response(
                     HttpStatus.OK,
                     ContentType.JSON,
-                    userDataJSON
+                    userDataJSON + "\n" + tips.getTip()
             );
         } catch (DataAccessException e) {
             unitOfWork.rollbackTransaction();
@@ -81,17 +87,26 @@ public class UserController extends Controller{
         }
     }
 
-    // POST /user
+    public User getUserFromBody(String bodyString) throws Exception {
+        try {
+            User user = this.getObjectMapper().readValue(bodyString, User.class);
+            return user;
+        } catch (JsonProcessingException e) {
+            throw new Exception(e.getMessage(), e);
+        }
 
+    }
+
+    // POST /user
     public Response loginUser(Request request) {
         try {
-            User user = this.getObjectMapper().readValue(request.getBody(), User.class);
+            User user = getUserFromBody(request.getBody());
             this.userRepository.loginUser(user);
 
             return new Response(
                     HttpStatus.OK,
                     ContentType.JSON,
-                    "{ \"message\": \"success\" }"
+                    "{ \"message\": \"success\" }" + "\n" + tips.getTip()
             );
 
         } catch (DataAccessException e) {
@@ -101,7 +116,7 @@ public class UserController extends Controller{
                     ContentType.JSON,
                     "{ \"message\": \"failed\" }"
             );
-        }  catch (JsonProcessingException e) {
+        }  catch (Exception e) {
             e.printStackTrace();
             unitOfWork.rollbackTransaction();
             return new Response(
@@ -115,16 +130,14 @@ public class UserController extends Controller{
     // POST /user
     public Response addUser(Request request) {
         try {
-            User user = this.getObjectMapper().readValue(request.getBody(), User.class);
+            User user = getUserFromBody(request.getBody());
             this.userRepository.addUser(user);
 
             return new Response(
                     HttpStatus.CREATED,
                     ContentType.JSON,
-                    "{ \"message\": \"Success\" }"
+                    "{ \"message\": \"Success\" }" + "\n" + tips.getTip()
             );
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
         } catch (DataAccessException e) {
             e.printStackTrace();
             unitOfWork.rollbackTransaction();
@@ -133,6 +146,8 @@ public class UserController extends Controller{
                     ContentType.JSON,
                     "{ \"message\": \"User already exists\" }"
             );
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         unitOfWork.rollbackTransaction();
         return new Response(
@@ -147,14 +162,14 @@ public class UserController extends Controller{
         try {
             String username = request.getPathParts().get(1);
             if (request.getAuthorizationToken().equals(username + "-sebToken")) {
-                User user = this.getObjectMapper().readValue(request.getBody(), User.class);
+                User user = getUserFromBody(request.getBody());
                 user.setUsername(username);
                 this.userRepository.addUserData(user);
 
                 return new Response(
                         HttpStatus.OK,
                         ContentType.JSON,
-                        "{ \"message\": \"Success\" }"
+                        "{ \"message\": \"Success\" }" + "\n" + tips.getTip()
                 );
             }
 
@@ -164,7 +179,7 @@ public class UserController extends Controller{
                     "{ \"message\": \"invalid token\" }"
             );
 
-        } catch (JsonProcessingException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             unitOfWork.rollbackTransaction();
             return new Response(
@@ -187,7 +202,7 @@ public class UserController extends Controller{
             return new Response(
                     HttpStatus.OK,
                     ContentType.JSON,
-                    userDataJSON
+                    userDataJSON + "\n" + tips.getTip()
             );
         } catch (Exception e) {
             e.printStackTrace();

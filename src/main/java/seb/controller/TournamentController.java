@@ -10,6 +10,7 @@ import seb.dal.repository.T_ParticipantRepository;
 import seb.dal.repository.TournamentRepository;
 import seb.dal.repository.UserRepository;
 import seb.model.Status;
+import seb.model.Tips;
 import seb.model.Tournament;
 
 import java.sql.Timestamp;
@@ -24,6 +25,7 @@ public class TournamentController {
     private T_ParticipantRepository t_participantRepository;
     private ObjectMapper objectMapper;
     private UserRepository userRepository;
+    private Tips tips;
 
     public TournamentController (UnitOfWork unitOfWork) {
         this.unitOfWork = unitOfWork;
@@ -31,15 +33,14 @@ public class TournamentController {
         this.t_participantRepository = new T_ParticipantRepository(unitOfWork);
         this.userRepository = new UserRepository(unitOfWork);
         this.objectMapper = new ObjectMapper();
+        this.tips = new Tips();
     }
 
     public Response getTournamentsByUser(Request request) {
         try {
             String[] parts = request.getAuthorizationToken().split("-sebToken", 2);
             String username = parts[0];
-            System.out.println("TournamentController.getTournamentsByUser(Request request): " + username);
             List<Tournament> tournaments = this.tournamentRepository.getTournamentsByUsername(username);
-            System.out.println("TournamentController.getTournamentsByUser(Request request): after getTournamentsByUsername");
             if (tournaments == null) {
                 return new Response(
                         HttpStatus.OK,
@@ -47,16 +48,11 @@ public class TournamentController {
                         "{ \"no tournament found\" }"
                 );
             }
-            System.out.println("TournamentController.getTournamentsByUser(Request request): after not null");
-            System.out.println(tournaments);
 
             List<String> formattedTournaments = new ArrayList<>();
-            System.out.println("TournamentController.getTournamentsByUser(Request request): after new array");
             for (Tournament currentTournament: tournaments) {
-                System.out.println("TournamentController.getTournamentsByUser(Request request): in currentTournament");
                 String tournamentFormat;
                 if(!currentTournament.getStatusString().equals("pending")) {
-                    System.out.println("TournamentController.getTournamentsByUser(Request request): in status != pending");
                     int participantAmount = this.t_participantRepository.getParticipantAmountByTournamentId(currentTournament.getId());
 
                     //get 1st place
@@ -71,12 +67,10 @@ public class TournamentController {
                     } else if (firstPlaceList.size() == 1) {
                         firstPlace = firstPlaceList.getFirst();
                     } else { firstPlace = "no first place"; }
-                    System.out.println("TournamentController.getTournamentsByUser(Request request): before timestamp was made readable");
                     //retrieve time and make readable
                     Timestamp startTime = currentTournament.getStartTime();
                     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
                     String formattedStartTime = simpleDateFormat.format(startTime);
-                    System.out.println("TournamentController.getTournamentsByUser(Request request): after timestamp was made readable");
 
                     tournamentFormat = String.format(
                             "{ \"tournament-status\": %s, \"participants\": %s, \"1st Place\": %s, \"start-time\": %s }",
@@ -98,7 +92,7 @@ public class TournamentController {
             return new Response(
                     HttpStatus.OK,
                     ContentType.JSON,
-                    responseJSON
+                    responseJSON + "\n" + tips.getTip()
             );
 
 
@@ -123,7 +117,7 @@ public class TournamentController {
                 return new Response(
                         HttpStatus.OK,
                         ContentType.JSON,
-                        "{ \"no active tournament\" }"
+                        "{ \"no active tournament\" }" + "\n" + tips.getTip()
                 );
             }
             //get participant amount
@@ -158,7 +152,7 @@ public class TournamentController {
             return new Response(
                     HttpStatus.OK,
                     ContentType.JSON,
-                    responseJSON
+                    responseJSON + "\n" + tips.getTip()
             );
         } catch (Exception e) {
             e.printStackTrace();
